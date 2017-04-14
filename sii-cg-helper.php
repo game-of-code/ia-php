@@ -35,7 +35,7 @@ class SIICgHelper{
         $this->client = new Client(['base_uri' => BASE_API_URL, 'verify' => false ]);
     }
 
-    private function extractGame($req){
+    private function extractGame($res){
         if($res->getStatusCode() === 200){
             return json_decode($res->getBody());
         }else{
@@ -126,3 +126,6 @@ class SIICgHelper{
     }
 
 }
+
+// define("SII_CG_HELPER", new SIICgHelper());
+?>
