@@ -125,6 +125,26 @@ class SIICgHelper{
         return $game;
     }
 
+
+    public function makeActionWithCoolDown($gameToken, $playerKey, $actionName, $delay){
+        $coolDown = 0;
+        foreach($this->me->character->actions as $action){
+            if($action->name === $actionName){
+                $coolDown = $action->coolDown;
+                break;
+            }
+        }
+        $coolDown = $coolDown * $this->speed;
+        $game = $this->makeAction($gameToken, $playerKey, $actionName, delay);
+        usleep($coolDown * 1000);
+        return $game;
+    }
+
+    public function generateUniquePlayerKey() {
+        return md5(uniqid(rand(),true));
+    }
+
+
 }
 
 // define("SII_CG_HELPER", new SIICgHelper());
