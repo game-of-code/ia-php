@@ -66,7 +66,7 @@ class IA{
         if($this->mode === "CREATE"){
             $this->createGame($this->gameName, $this->gameVersusPlayer,$this->playerKey, $this->character, $this->playerName);
         } else {
-            $this->joinGame($this->gameToken, $this->playerKey, $this->playerName);
+            $this->joinGame($this->gameToken, $this->playerKey,$this->character, $this->playerName);
         }
 
     }
@@ -82,7 +82,7 @@ class IA{
     }
 
     public function joinGame($gameToken, $playerKey, $character, $playerName){
-        echo("join game".gameToken." ".$playerKey." ".$character);
+        echo("join game : ".$gameToken."\n");
         $game = $this->cgHelper->joinGameWithCountDown($gameToken, $playerKey, $playerName, $character);
         if($game && !$game->error){
             $this->startPlaying();
