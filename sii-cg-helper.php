@@ -1,5 +1,7 @@
 <?php
 use GuzzleHttp\Client;
+use GuzzleHttp\Psr7;
+use GuzzleHttp\Exception\RequestException;
 
 define("BASE_API_URL", "https://coding-game.swat-sii.fr/api");
 
@@ -25,7 +27,7 @@ class GAME_STATUS{
 
 class SIICgHelper{
     private $me=null;
-    private $opponenet=null;
+    private $opponent=null;
     private $speed=0;
     private $gameToken=null;
 
@@ -36,10 +38,14 @@ class SIICgHelper{
     }
 
     private function extractGame($res){
-        if($res->getStatusCode() === 200){
+        echo "status code : ".$res->getStatusCode()."\n";
+        if($res->getStatusCode() < 400){
             return json_decode($res->getBody());
         }else{
-            return null;
+            $obj = new stdClass();
+            $obj->error = new stdClass();
+            $obj->error->statusCode = $res->getStatusCode();
+            return $obj;
         }
     }
 
@@ -49,7 +55,10 @@ class SIICgHelper{
         if($game->status === GAME_STATUS::PLAYING){
             $this->me = $game->me;
             $this->opponent = $game->foe;
-            usleep($game->countDown*1000);
+            $start = $game->countDown + 10;
+            $start = $start * 1000;
+            echo "waiting for start".$start."\n";
+            usleep($start);
             return true;
         }else{
             return false;
@@ -59,74 +68,107 @@ class SIICgHelper{
 
 
     public function createGame($name, $speedy, $versus){
-        $res = $this->client->request('POST', '/api/fights', [
-            'json' => [
-                'name' => $name,
-                'speedy'=> $speedy,
-                'versus'=> $versus
-            ]
-        ]);
-        return $this->extractGame($res);
+        echo "TEST : ".$name." speed:  ".$speedy." versus : ".$versus;
+        try{
+            $res = $this->client->request('POST', '/api/fights', [
+                'json' => [
+                    'name' => $name,
+                    'speedy'=> $speedy,
+                    'versus'=> $versus
+                ]
+            ]);
+            return $this->extractGame($res);
+        }catch(RequestException $e){
+            if($e->hasResponse()){
+                return $this->extractGame($e->getResponse());
+            }
+            return null;
+        }
     }
 
     public function joinGame($gameToken, $playerKey, $playerName, $character){
-         $res = $this->client->request('POST', '/api/fights/'.$gameToken.'/players/'.$playerKey, [
-            'json' => [
-                'character' => $character,
-                'name'=> $playerName
-            ]
-        ]);
+        echo "join game".$gameToken;
+        try{
+            $res = $this->client->request('POST', '/api/fights/'.$gameToken.'/players/'.$playerKey, [
+                'json' => [
+                    'character' => $character,
+                    'name'=> $playerName
+                ]
+            ]);
 
-       return $this->extractGame($res);
+            return $this->extractGame($res);
+        }catch(RequestException $e){
+            if($e->hasResponse()){
+                return $this->extractGame($e->getResponse());
+            }
+            return null;
+        }
     }
 
     public function joinGameWithCountDown($gameToken, $playerKey, $playerName, $character){
-         $res = $this->client->request('POST', '/api/fights/'.$gameToken.'/players/'.$playerKey, [
-            'json' => [
-                'character' => $character,
-                'name'=> $playerName
-            ]
-        ]);
-
-        $game = $this->extractGame($res);
+        $game = $this->joinGame($gameToken, $playerKey, $playerName, $character);
         if($game){
-            if($this->resolveGameStarted($game)){
-                return $game;
+            if(!$game->error){
+                if($this->resolveGameStarted($game)){
+                    return $game;
+                }else{
+                    return $this->checkGameReady($gameToken, $playerKey);
+                }
+
             }else{
-                return $this->checkGameReady($gameToken, $playerKey);
+                return $game;
             }
 
         }
     }
 
     public function getGame($gameToken, $playerKey){
-        $res = $this->client->request('GET', '/api/fights/'.$gameToken.'/players/'.$playerKey);
-        return $this.extractGame($res);
+        try{
+            $res = $this->client->request('GET', '/api/fights/'.$gameToken.'/players/'.$playerKey);
+            return $this->extractGame($res);
+        }catch(RequestException $e){
+            if($e->hasResponse()){
+                return $this->extractGame($e->getResponse());
+            }
+            return null;
+        }
     }
 
     public function checkGameReady($gameToken, $playerKey){
+        echo "check game ready";
+
         $game = $this->getGame($gameToken, $playerKey);
         if(!$this->resolveGameStarted($game)){
             sleep(1);
-            return checkGameReady($gameToken, $playerKey);
+            return $this->checkGameReady($gameToken, $playerKey);
         }else{
             return $game;
         }
     }
 
-    public function makeAction($gameToken, $playerKey, $actionName, $delay){
+    public function performAction($gameToken, $playerKey, $actionName, $delay){
         if($delay){
             usleep($delay*1000);
         }
-        $res = $this->client->request('POST', '/api/fights/'.$gameToken.'/players/'.$playerKey.'/actions/'.$action);
-        $game = $this->extractGame($res);
-        $this->me = $game->me;
-        $this->opponent = $game->foe;
-        return $game;
+        try{
+            $res = $this->client->request('POST', '/api/fights/'.$gameToken.'/players/'.$playerKey.'/actions/'.$actionName);
+            $game = $this->extractGame($res);
+            $this->me = $game->me;
+            $this->opponent = $game->foe;
+            echo "no exception";
+            return $game;
+
+        }catch(RequestException $e){
+            if($e->hasResponse()){
+                return $this->extractGame($e->getResponse());
+            }
+            // var_dump($e);
+            return null;
+        }
     }
 
 
-    public function makeActionWithCoolDown($gameToken, $playerKey, $actionName, $delay){
+    public function performActionWithCoolDown($gameToken, $playerKey, $actionName, $delay){
         $coolDown = 0;
         foreach($this->me->character->actions as $action){
             if($action->name === $actionName){
@@ -135,7 +177,7 @@ class SIICgHelper{
             }
         }
         $coolDown = $coolDown * $this->speed;
-        $game = $this->makeAction($gameToken, $playerKey, $actionName, delay);
+        $game = $this->performAction($gameToken, $playerKey, $actionName, $delay);
         usleep($coolDown * 1000);
         return $game;
     }
@@ -147,5 +189,4 @@ class SIICgHelper{
 
 }
 
-// define("SII_CG_HELPER", new SIICgHelper());
 ?>

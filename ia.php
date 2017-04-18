@@ -2,71 +2,144 @@
 require 'vendor/autoload.php';
 require_once('sii-cg-helper.php');
 
-class Ia{
 
-    // private $api;
-    // private $playerKey = 'MySecretPlayer';
-    // private $character = 'WARRIOR';
-    // private $playerName = 'xortam';
-    // private $currentGame;
-    // private $myCharacter;
-    // private $currentAction;
+class IA{
 
-    // public function __construct($api){
-    //     $this->api = $api;
-    // }
+    private $mode = null;
+    private $gameName = null;
+    private $gameVersusPlayer = null;
+    private $gameToken = null;
+    private $character = null;
+    private $playerName = "DEFAULT_PLAYER_NAME";
+    private $playerKey = null;
+    private $speed = 0;
+    private $cgHelper = null;
 
-    // public function versusIa(){
-    //     $res = $this->api->createGame('PHP', false, false);
-    //     if($res->getStatusCode()===200){
-    //         $this->currentGame = json_decode($res->getBody());
-    //         $res = $this->api->joinGame($this->currentGame->token, $this->playerKey, $this->character, $this->playerName);
-    //           if($res->getStatusCode()===200){
-    //             $this->currentGame = json_decode($res->getBody());
-    //             if($this->currentGame->me){
-    //                 $this->myCharacter = $this->currentGame->me->character;
-    //                 $this->currentAction = $this->myCharacter->actions[0];
-    //             }
-    //             $this->startAttack();
-    //           }
+    public function __construct(){
+        $this->cgHelper = new SIICgHelper();
+        $this->playerKey = $this->cgHelper->generateUniquePlayerKey();
 
-    //     }
-    // }
-
-    // public function startAttack(){
-    //     if($this->currentGame){
-    //         if($this->currentGame->countDown > 0){
-    //             echo 'waiting for countdown ::'.$this->currentGame->countDown / 1000;
-    //             sleep(round($this->currentGame->countDown / 1000, 0, PHP_ROUND_HALF_UP));
-    //         }
-    //         $this->performAction();
-    //     }
-    // }
-
-    // public function performAction(){
-    //     echo 'performing attack'.$this->currentAction->name.'---'.$this->currentGame->status;
-    //     if($this->currentGame->status ==='PLAYING'){
-    //         $res = $this->api->performAction($this->currentGame->token,$this->playerKey,$this->currentAction->name);
-    //         if($res->getStatusCode()===200){
-    //             $this->currentGame = json_decode($res->getBody());
-    //             echo '\n performing action :: '.($this->currentGame->speed * $this->currentAction->coolDown)/1000;
-    //             sleep(($this->currentGame->speed * $this->currentAction->coolDown)/1000);
-    //             $this->performAction();
-    //        }else{
-    //            echo $res->getStatusCode().'<--->'.$res->getBody();
-    //        }
-    //     }
-    // }
+    }
     
-    public static function main(){
-        $sii_cg_helper = new SIICgHelper();
-        $game = $sii_cg_helper->createGame("PHP",false,false);
-        // var_dump($game);
-        $game = $sii_cg_helper->joinGameWithCountDown($game->token, "sckeypl", "MBR", CHARACTERS::WARRIOR);
-        echo "game Joined ::: ";
-        echo $game->token;
+    public function main($cliArgs){
+        $cliArgsLength = count($cliArgs);
+        
+        if($cliArgsLength < 2 || (strpos($cliArgs[1], "CREATE") === false && strpos($cliArgs[1], "JOIN") === false)){
+            echo("CREATE or JOIN argument is required");
+            exit();
+        }
+
+        $this->mode = $cliArgs[1];
+
+        if($this->mode === "CREATE"){
+            if($cliArgsLength<3){
+                echo "Game argument is required";
+                exit();
+            }
+            $this->gameName = $cliArgs[2];
+
+            $this->gameVersusPlayer = ($cliArgsLength >= 6) ? $cliArgs[5] : false;
+        }
+
+        if($this->mode === "JOIN") {
+            if($cliArgsLength<3){
+                echo("Game token is required");
+                exit();
+            }
+            $this->gameToken = $cliArgs[2];
+        }
+
+        if($cliArgsLength<4){
+            echo "Character argument is required";
+            exit();
+        }
+
+        $characterArray = array(CHARACTERS::DRUID,CHARACTERS::PALADIN, CHARACTERS::WARRIOR, CHARACTERS::SORCERER);
+        if(array_search($cliArgs[3], $characterArray)=== false){
+            echo "Character need to be DRUID, PALADIN, WARRIOR, SORCERER";
+            exit();
+        }
+
+        $this->character = $cliArgs[3];
+        $this->playerName = $cliArgsLength >=5 ? $cliArgs[4] : $this->playerName;
+
+        if($this->mode === "CREATE"){
+            $this->createGame($this->gameName, $this->gameVersusPlayer,$this->playerKey, $this->character, $this->playerName);
+        } else {
+            $this->joinGame($this->gameToken, $this->playerKey, $this->playerName);
+        }
+
+    }
+
+    public function createGame($gameName, $gameVersusPlayer, $playerKey, $character, $playerName){
+        echo "create game ".$gameName." ".$gameVersusPlayer." ".$playerKey." ".$character." ".$playerName;
+        $game = $this->cgHelper->createGame($gameName, "false", $gameVersusPlayer);
+        if($game && !$game->error){
+            $this->gameToken = $game->token;
+            $this->speed = $game->speed;
+            $this->joinGame($this->gameToken, $playerKey, $character, $playerName);
+        }
+    }
+
+    public function joinGame($gameToken, $playerKey, $character, $playerName){
+        echo("join game".gameToken." ".$playerKey." ".$character);
+        $game = $this->cgHelper->joinGameWithCountDown($gameToken, $playerKey, $playerName, $character);
+        if($game && !$game->error){
+            $this->startPlaying();
+        }
+    }
+
+    public function startPlaying(){
+        echo "start playing"; 
+        /*
+                MAKE YOUR IA HERE
+        */
+        $this->makeAction();
+    }
+
+    public function makeAction(){
+        /*
+                MAKE YOUR IA HERE
+
+                exemple this code use the HIT attack only and catch http error from server
+        */
+        echo "make action".ACTIONS::HIT;
+        $game = $this->cgHelper->performActionWithCoolDown($this->gameToken, $this->playerKey, ACTIONS::HIT,0);
+        if($game){ 
+        
+            if(!$game->error){
+                $this->makeAction();
+            }else{
+                if($game->error->statusCode){
+                    switch($game->error->statusCode){
+                        case 403:
+                            echo "Gama not ready \n";
+                            usleep(5000);
+                            $this->makeAction();
+                        break;
+                        case 423:
+                            echo "too fast";
+                            usleep(300000);
+                            $this->makeAction();
+                        break;
+                        case 410:
+                            echo "game ended";
+                            $game = $this->cgHelper->getGame($this->gameToken, $this->playerKey);
+                            if($game){
+                                echo $game->me->healthPoints === 0 ? "You Lose" : "You Win";
+                            }
+                        break;
+                        default:
+                            echo "error in request ".$game->error->statusCode;
+                    }
+                }
+            }
+        }else{
+            echo "no game returned...";
+        }
+        
     }
 }
-
-Ia::main();
+$ia = new IA();
+$ia->main($argv);
 ?>
