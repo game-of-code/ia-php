@@ -3,7 +3,9 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Exception\RequestException;
 
+
 define("BASE_API_URL", "https://coding-game.swat-sii.fr/api");
+// define("BASE_API_URL", "http://192.168.0.2/api");
 
 class CHARACTERS{
     const WARRIOR="WARRIOR";
@@ -108,7 +110,7 @@ class SIICgHelper{
     public function joinGameWithCountDown($gameToken, $playerKey, $playerName, $character){
         $game = $this->joinGame($gameToken, $playerKey, $playerName, $character);
         if($game){
-            if(!$game->error){
+            if(!property_exists($game, "error")){
                 if($this->resolveGameStarted($game)){
                     return $game;
                 }else{
@@ -155,7 +157,6 @@ class SIICgHelper{
             $game = $this->extractGame($res);
             $this->me = $game->me;
             $this->opponent = $game->foe;
-            echo "no exception";
             return $game;
 
         }catch(RequestException $e){
