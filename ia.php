@@ -2,7 +2,9 @@
 require 'vendor/autoload.php';
 require_once('sii-cg-helper.php');
 
-
+/**
+ * IA class
+ */
 class IA{
 
     private $mode = null;
@@ -15,12 +17,21 @@ class IA{
     private $speed = 0;
     private $cgHelper = null;
 
+    /**
+     * Constructor
+     */
     public function __construct(){
         $this->cgHelper = new SIICgHelper();
         $this->playerKey = $this->cgHelper->generateUniquePlayerKey();
 
     }
     
+    /**
+     * Main function of the IA
+     *
+     * @param [Arguments] $cliArgs
+     * @return void
+     */
     public function main($cliArgs){
         $cliArgsLength = count($cliArgs);
         
@@ -71,6 +82,16 @@ class IA{
 
     }
 
+    /**
+     * create Game
+     *
+     * @param [string] $gameName
+     * @param [boolean] $gameVersusPlayer
+     * @param [string] $playerKey
+     * @param [CHARACTER] $character
+     * @param [string] $playerName
+     * @return void
+     */
     public function createGame($gameName, $gameVersusPlayer, $playerKey, $character, $playerName){
         echo "create game ".$gameName." ".$gameVersusPlayer." ".$playerKey." ".$character." ".$playerName;
         $game = $this->cgHelper->createGame($gameName, "false", $gameVersusPlayer);
@@ -81,6 +102,15 @@ class IA{
         }
     }
 
+    /**
+     * Join game function
+     *
+     * @param [string] $gameToken
+     * @param [string] $playerKey
+     * @param [CHARACTER] $character
+     * @param [string] $playerName
+     * @return void
+     */
     public function joinGame($gameToken, $playerKey, $character, $playerName){
         echo("join game : ".$gameToken."\n");
         $game = $this->cgHelper->joinGameWithCountDown($gameToken, $playerKey, $playerName, $character);
@@ -89,6 +119,12 @@ class IA{
         }
     }
 
+    /**
+     * Start Playing function
+     * executed at startup of the game
+     *
+     * @return void
+     */
     public function startPlaying(){
         echo "start playing"; 
         /*
@@ -97,6 +133,12 @@ class IA{
         $this->makeAction();
     }
 
+    /**
+     * Make action function
+     * executed when player attack
+     * 
+     * @return void
+     */
     public function makeAction(){
         /*
                 MAKE YOUR IA HERE

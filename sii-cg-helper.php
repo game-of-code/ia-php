@@ -7,6 +7,9 @@ use GuzzleHttp\Exception\RequestException;
 define("BASE_API_URL", "https://coding-game.swat-sii.fr/api");
 // define("BASE_API_URL", "http://192.168.0.2/api");
 
+/**
+ * Class CHARACTERS static clas to retrieve Characters type
+ */
 class CHARACTERS{
     const WARRIOR="WARRIOR";
     const PALADIN="PALADIN";
@@ -14,6 +17,9 @@ class CHARACTERS{
     const SORCERER="SORCERER";
 }
 
+/**
+ * Class ACTIONS static clas to retrieve action type
+ */
 class ACTIONS{
     const HIT = "HIT";
     const THURST = "THURST";
@@ -21,12 +27,19 @@ class ACTIONS{
     const SHIELD = "SHIELD";
 }
 
+
+/**
+ * Class GAME_STATUS static clas to retrieve status type
+ */
 class GAME_STATUS{
     const WAITING = "WAITING";
     const PLAYING = "PLAYING";
     const FINISHED = "FINISHED";
 }
 
+/**
+ * Helper for coding game
+ */
 class SIICgHelper{
     private $me=null;
     private $opponent=null;
@@ -35,10 +48,20 @@ class SIICgHelper{
 
     private $client;
 
+
+    /**
+     * constructor
+     */
     public function __construct(){
         $this->client = new Client(['base_uri' => BASE_API_URL, 'verify' => false ]);
     }
 
+    /**
+     * extract Game function. called to retur game from an API call
+     *
+     * @param [Response] $res
+     * @return Game || Error
+     */
     private function extractGame($res){
         echo "status code : ".$res->getStatusCode()."\n";
         if($res->getStatusCode() < 400){
@@ -51,6 +74,12 @@ class SIICgHelper{
         }
     }
 
+    /**
+     * resolveGameStarted function called to check if game is ready to start
+     *
+     * @param [Game] $game
+     * @return boolean
+     */
     private function resolveGameStarted($game){
         $this->gameToken = $game->token;
         $this->speed = $game->speed;
@@ -68,7 +97,14 @@ class SIICgHelper{
     }
 
 
-
+    /**
+     * createGame function called to create a Game
+     *
+     * @param [string] $name
+     * @param [boolean] $speedy
+     * @param [boolean] $versus
+     * @return void
+     */
     public function createGame($name, $speedy, $versus){
         echo "TEST : ".$name." speed:  ".$speedy." versus : ".$versus;
         try{
@@ -88,6 +124,15 @@ class SIICgHelper{
         }
     }
 
+    /**
+     * Join game function called to join a game
+     *
+     * @param [string] $gameToken
+     * @param [string] $playerKey
+     * @param [string] $playerName
+     * @param [CHARACTER] $character
+     * @return Game
+     */
     public function joinGame($gameToken, $playerKey, $playerName, $character){
         echo "join game".$gameToken;
         try{
@@ -107,6 +152,15 @@ class SIICgHelper{
         }
     }
 
+    /**
+     * joinGameWithCountDown function with countDown to wait the start up of the game
+     *
+     * @param [type] $gameToken
+     * @param [type] $playerKey
+     * @param [type] $playerName
+     * @param [type] $character
+     * @return Game
+     */
     public function joinGameWithCountDown($gameToken, $playerKey, $playerName, $character){
         $game = $this->joinGame($gameToken, $playerKey, $playerName, $character);
         if($game){
@@ -124,6 +178,13 @@ class SIICgHelper{
         }
     }
 
+    /**
+     * getGame function called to retrieve a game 
+     *
+     * @param [string] $gameToken
+     * @param [string] $playerKey
+     * @return Game
+     */
     public function getGame($gameToken, $playerKey){
         try{
             $res = $this->client->request('GET', '/api/fights/'.$gameToken.'/players/'.$playerKey);
@@ -136,6 +197,13 @@ class SIICgHelper{
         }
     }
 
+    /**
+     * checkGameReady function to wait arrival of a second participant
+     *
+     * @param [string] $gameToken
+     * @param [string] $playerKey
+     * @return Game
+     */
     public function checkGameReady($gameToken, $playerKey){
         echo "check game ready";
 
@@ -148,6 +216,15 @@ class SIICgHelper{
         }
     }
 
+    /**
+     * performAction function called to execut an action
+     *
+     * @param [string] $gameToken
+     * @param [string] $playerKey
+     * @param [ACTION] $actionName
+     * @param [int] $delay 
+     * @return Game
+     */
     public function performAction($gameToken, $playerKey, $actionName, $delay){
         if($delay){
             usleep($delay*1000);
@@ -169,6 +246,15 @@ class SIICgHelper{
     }
 
 
+    /**
+     * performActionWithCoolDown function called to execute action en return when cooldown is over
+     *
+     * @param [string] $gameToken
+     * @param [string] $playerKey
+     * @param [ACTION] $actionName
+     * @param [int] $delay
+     * @return Game
+     */
     public function performActionWithCoolDown($gameToken, $playerKey, $actionName, $delay){
         $coolDown = 0;
         foreach($this->me->character->actions as $action){
@@ -183,6 +269,11 @@ class SIICgHelper{
         return $game;
     }
 
+    /**
+     * generateUniquePlayerKey function generate unique id for player key
+     *
+     * @return string
+     */
     public function generateUniquePlayerKey() {
         return md5(uniqid(rand(),true));
     }
