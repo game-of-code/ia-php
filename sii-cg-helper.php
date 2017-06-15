@@ -86,7 +86,7 @@ class SIICgHelper{
         if($game->status === GAME_STATUS::PLAYING){
             $this->me = $game->me;
             $this->opponent = $game->foe;
-            $start = $game->countDown + 10;
+            $start = $game->countDown;
             $start = $start * 1000;
             echo "waiting for start".$start."\n";
             usleep($start);
