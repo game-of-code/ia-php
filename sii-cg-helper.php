@@ -15,6 +15,8 @@ class CHARACTERS{
     const PALADIN="PALADIN";
     const DRUID="DRUID";
     const SORCERER="SORCERER";
+    const ELF="ELF";
+    const TROLL="TROLL";
 }
 
 /**
@@ -179,7 +181,7 @@ class SIICgHelper{
     }
 
     /**
-     * getGame function called to retrieve a game 
+     * getGame function called to retrieve a game
      *
      * @param [string] $gameToken
      * @param [string] $playerKey
@@ -222,7 +224,7 @@ class SIICgHelper{
      * @param [string] $gameToken
      * @param [string] $playerKey
      * @param [ACTION] $actionName
-     * @param [int] $delay 
+     * @param [int] $delay
      * @return Game
      */
     public function performAction($gameToken, $playerKey, $actionName, $delay){

@@ -25,7 +25,7 @@ class IA{
         $this->playerKey = $this->cgHelper->generateUniquePlayerKey();
 
     }
-    
+
     /**
      * Main function of the IA
      *
@@ -34,7 +34,7 @@ class IA{
      */
     public function main($cliArgs){
         $cliArgsLength = count($cliArgs);
-        
+
         if($cliArgsLength < 2 || (strpos($cliArgs[1], "CREATE") === false && strpos($cliArgs[1], "JOIN") === false)){
             echo("CREATE or JOIN argument is required");
             exit();
@@ -67,7 +67,7 @@ class IA{
 
         $characterArray = array(CHARACTERS::DRUID,CHARACTERS::PALADIN, CHARACTERS::WARRIOR, CHARACTERS::SORCERER);
         if(array_search($cliArgs[3], $characterArray)=== false){
-            echo "Character need to be DRUID, PALADIN, WARRIOR, SORCERER";
+            echo "Character need to be DRUID, PALADIN, WARRIOR, SORCERER, TROLL, ELF";
             exit();
         }
 
@@ -126,7 +126,7 @@ class IA{
      * @return void
      */
     public function startPlaying(){
-        echo "start playing"; 
+        echo "start playing";
         /*
                 MAKE YOUR IA HERE
         */
@@ -136,7 +136,7 @@ class IA{
     /**
      * Make action function
      * executed when player attack
-     * 
+     *
      * @return void
      */
     public function makeAction(){
@@ -147,8 +147,8 @@ class IA{
         */
         echo "action : ".ACTIONS::HIT." ";
         $game = $this->cgHelper->performActionWithCoolDown($this->gameToken, $this->playerKey, ACTIONS::HIT,0);
-        if($game){ 
-        
+        if($game){
+
             if(!property_exists($game,"error")){
                 echo "YOU : ".$game->me->healthPoints."  -  HIM : ".$game->foe->healthPoints."\n";
                 $this->makeAction();
@@ -180,7 +180,7 @@ class IA{
         }else{
             echo "no game returned...";
         }
-        
+
     }
 }
 $ia = new IA();
