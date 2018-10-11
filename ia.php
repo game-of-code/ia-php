@@ -65,7 +65,7 @@ class IA{
             exit();
         }
 
-        $characterArray = array(CHARACTERS::DRUID,CHARACTERS::PALADIN, CHARACTERS::WARRIOR, CHARACTERS::SORCERER);
+        $characterArray = array(CHARACTERS::DRUID,CHARACTERS::PALADIN, CHARACTERS::WARRIOR, CHARACTERS::SORCERER, CHARACTERS::TROLL, CHARACTERS::ELF);
         if(array_search($cliArgs[3], $characterArray)=== false){
             echo "Character need to be DRUID, PALADIN, WARRIOR, SORCERER, TROLL, ELF";
             exit();
