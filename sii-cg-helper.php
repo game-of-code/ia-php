@@ -24,7 +24,7 @@ class CHARACTERS{
  */
 class ACTIONS{
     const HIT = "HIT";
-    const THURST = "THURST";
+    const THRUST = "THRUST";
     const HEAL = "HEAL";
     const SHIELD = "SHIELD";
 }
